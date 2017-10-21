@@ -9,10 +9,6 @@ const debugOpts = debug
     ? { headless: false, slowMo: 250 }
     : {}
 
-const sleep = ms => {
-    return new Promise(res => { setTimeout(() => res(), ms) })
-}
-
 const cli = meow(`
     Usage: $ mealpuppet --email mail@gmail.com --password p455w0rd --filter 'walter & monty'
 `)
@@ -31,10 +27,12 @@ const spinner = ora('Spinning up particle collider').start()
 puppeteer.launch(debugOpts).then(async browser => {
     const page = await browser.newPage()
     await page.goto('https://secure.mealpal.com/lunch')
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36')
     await page.setViewport({
       width: 1440,
       height: 1000
     });
+
 
     await page.focus('input[type=email]')
     await page.type(email)
@@ -44,8 +42,14 @@ puppeteer.launch(debugOpts).then(async browser => {
 
     await page.click('button[type=submit]')
 
+    console.log(page)
     spinner.text = 'Searching for ingredients'
-    await sleep(6000)
+
+    await page.waitForSelector('.row.not-have span[role=button]')
+    await page.click('.row.not-have span[role=button]')
+
+
+    await page.waitForSelector('.filter-text input')
     spinner.text = 'Loading particle collider'
 
     await page.focus('.filter-text input')
@@ -59,8 +63,9 @@ puppeteer.launch(debugOpts).then(async browser => {
     await page.click('.pickupTimes-list li:nth-of-type(4)')
 
     spinner.text = 'Making soup with particle collider'
-    await sleep(500)
+    await page.waitForSelector('.mp-reserve-button')
     await page.click('.mp-reserve-button')
+
 
     spinner.text = 'Wow that was fast 🦄'
     spinner.succeed()
